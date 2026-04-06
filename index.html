@@ -6,318 +6,148 @@
   <title>Kenoa · Assistente Operacional</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --dark: #1E1E1C;
-      --gold: #C8A96E;
-      --gold-light: rgba(200,169,110,0.12);
-      --cream: #F4EFE6;
-      --cream-dark: #EDE7DC;
-      --text: #2C2A25;
-      --muted: #7A7269;
-      --border: rgba(200,169,110,0.2);
-      --border-light: rgba(44,42,37,0.1);
+      --dark: #1E1E1C; --gold: #C8A96E; --gold-light: rgba(200,169,110,0.12);
+      --cream: #F4EFE6; --muted: #7A7269;
+      --border: rgba(200,169,110,0.2); --border-light: rgba(244,239,230,0.08);
     }
+    html, body { height: 100%; font-family: system-ui, -apple-system, sans-serif; background: var(--dark); color: var(--cream); }
 
-    html, body {
-      height: 100%;
-      font-family: 'system-ui', -apple-system, sans-serif;
-      background: var(--dark);
-      color: var(--cream);
-    }
-
-    /* ── LOGIN ── */
+    /* LOGIN */
     #loginScreen {
-      position: fixed; inset: 0;
-      background: var(--dark);
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 2rem; z-index: 100;
+      position: fixed; inset: 0; background: var(--dark);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2rem; z-index: 100;
     }
-
-    .login-logo {
-      text-align: center;
-    }
-    .login-logo p {
-      font-size: 10px; letter-spacing: 0.18em;
-      color: var(--gold); text-transform: uppercase; margin-bottom: 10px;
-    }
-    .login-logo h1 {
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-size: 32px; font-weight: 300; color: var(--cream);
-      letter-spacing: 0.04em;
-    }
-
-    .login-form {
-      display: flex; flex-direction: column; gap: 12px;
-      width: 280px;
-    }
+    .login-logo { text-align: center; }
+    .login-logo p { font-size: 10px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; margin-bottom: 10px; }
+    .login-logo h1 { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; color: var(--cream); letter-spacing: 0.04em; }
+    .login-divider { width: 32px; height: 1px; background: var(--gold); opacity: 0.3; }
+    .login-form { display: flex; flex-direction: column; gap: 12px; width: 280px; }
     .login-form input {
-      background: rgba(244,239,230,0.06);
-      border: 0.5px solid var(--border);
-      color: var(--cream);
-      padding: 12px 16px;
-      font-size: 14px;
-      border-radius: 4px;
-      outline: none;
-      letter-spacing: 0.06em;
-      text-align: center;
+      background: rgba(244,239,230,0.06); border: 0.5px solid var(--border); color: var(--cream);
+      padding: 12px 16px; font-size: 14px; border-radius: 4px; outline: none;
+      letter-spacing: 0.06em; text-align: center;
     }
-    .login-form input:focus {
-      border-color: var(--gold);
-      background: rgba(200,169,110,0.06);
-    }
+    .login-form input:focus { border-color: var(--gold); background: rgba(200,169,110,0.06); }
     .login-form input::placeholder { color: var(--muted); }
     .login-btn {
-      background: transparent;
-      border: 0.5px solid var(--gold);
-      color: var(--gold);
-      padding: 11px;
-      font-size: 11px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      cursor: pointer;
-      border-radius: 4px;
-      transition: background 0.2s;
+      background: transparent; border: 0.5px solid var(--gold); color: var(--gold);
+      padding: 11px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+      cursor: pointer; border-radius: 4px; transition: background 0.2s;
     }
     .login-btn:hover { background: var(--gold-light); }
-    #loginError {
-      font-size: 12px; color: #c0553a; text-align: center;
-      min-height: 16px;
-    }
+    #loginError { font-size: 12px; color: #c0553a; text-align: center; min-height: 16px; }
 
-    .login-divider {
-      width: 32px; height: 1px;
-      background: var(--gold); opacity: 0.3;
-      margin: 0 auto;
-    }
-
-    /* ── APP ── */
-    #app {
-      display: none; height: 100vh;
-      flex-direction: column;
-    }
-
-    /* Header */
+    /* APP */
+    #app { display: none; height: 100vh; flex-direction: column; }
     .header {
-      background: var(--dark);
-      border-bottom: 0.5px solid var(--border);
-      padding: 0 1.75rem;
-      height: 58px;
-      display: flex; align-items: center; justify-content: space-between;
-      flex-shrink: 0;
+      background: var(--dark); border-bottom: 0.5px solid var(--border);
+      padding: 0 1.75rem; height: 58px;
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
     }
-    .header-brand p {
-      font-size: 9px; letter-spacing: 0.16em;
-      color: var(--gold); text-transform: uppercase; margin-bottom: 3px;
-    }
-    .header-brand h1 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 16px; font-weight: 300;
-      color: var(--cream); letter-spacing: 0.04em;
-    }
-    .header-status {
-      display: flex; align-items: center; gap: 8px;
-    }
+    .header-brand p { font-size: 9px; letter-spacing: 0.16em; color: var(--gold); text-transform: uppercase; margin-bottom: 3px; }
+    .header-brand h1 { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 300; color: var(--cream); letter-spacing: 0.04em; }
+    .header-status { display: flex; align-items: center; gap: 8px; }
     #statusText { font-size: 11px; color: var(--muted); }
-    #statusDot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: #3a3a38; transition: background 0.4s;
-    }
+    #statusDot { width: 7px; height: 7px; border-radius: 50%; background: #3a3a38; transition: background 0.4s; }
 
-    /* Layout */
-    .main {
-      display: flex; flex: 1; overflow: hidden;
-    }
+    .main { display: flex; flex: 1; overflow: hidden; }
 
-    /* Sidebar */
+    /* SIDEBAR */
     .sidebar {
-      width: 260px; flex-shrink: 0;
-      background: rgba(244,239,230,0.03);
+      width: 260px; flex-shrink: 0; background: rgba(244,239,230,0.02);
       border-right: 0.5px solid var(--border);
-      display: flex; flex-direction: column;
-      padding: 1.25rem;
-      gap: 1rem;
-      overflow-y: auto;
+      display: flex; flex-direction: column; overflow: hidden;
     }
-
-    .sidebar-label {
-      font-size: 9px; letter-spacing: 0.14em;
-      color: var(--muted); text-transform: uppercase;
-      margin-bottom: 4px;
+    .sidebar-tabs { display: flex; border-bottom: 0.5px solid var(--border); flex-shrink: 0; }
+    .sidebar-tab {
+      flex: 1; padding: 10px 0; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--muted); cursor: pointer; text-align: center;
+      border-bottom: 1.5px solid transparent; transition: all 0.15s; background: transparent; border-top: none; border-left: none; border-right: none;
     }
+    .sidebar-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .sidebar-panel { flex: 1; overflow-y: auto; padding: 1rem; display: none; flex-direction: column; gap: 10px; }
+    .sidebar-panel.active { display: flex; }
 
+    .sidebar-label { font-size: 9px; letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; }
     .drop-zone {
-      border: 1px dashed rgba(200,169,110,0.3);
-      border-radius: 6px; padding: 1.25rem 1rem;
-      text-align: center; cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
+      border: 1px dashed rgba(200,169,110,0.3); border-radius: 6px; padding: 1rem;
+      text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
     }
-    .drop-zone:hover, .drop-zone.drag-over {
-      border-color: var(--gold);
-      background: var(--gold-light);
-    }
-    .drop-zone p {
-      font-size: 12px; color: var(--muted); line-height: 1.5;
-    }
+    .drop-zone:hover, .drop-zone.drag-over { border-color: var(--gold); background: var(--gold-light); }
+    .drop-zone p { font-size: 12px; color: var(--muted); line-height: 1.5; }
     .drop-zone span { color: var(--gold); }
 
-    #reportList { display: flex; flex-direction: column; gap: 6px; }
-
     .report-chip {
-      display: flex; align-items: center; gap: 8px;
-      padding: 8px 10px; border-radius: 5px;
-      border: 0.5px solid rgba(200,169,110,0.25);
-      cursor: pointer; transition: all 0.15s;
-      background: transparent;
+      display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 5px;
+      border: 0.5px solid rgba(200,169,110,0.2); cursor: pointer; transition: all 0.15s; background: transparent;
     }
-    .report-chip.active {
-      border-color: var(--gold);
-      background: var(--gold-light);
-    }
-    .chip-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: #3a3a38; flex-shrink: 0; transition: background 0.2s;
-    }
+    .report-chip.active { border-color: var(--gold); background: var(--gold-light); }
+    .chip-dot { width: 6px; height: 6px; border-radius: 50%; background: #3a3a38; flex-shrink: 0; transition: background 0.2s; }
     .report-chip.active .chip-dot { background: var(--gold); }
-    .chip-name {
-      flex: 1; font-size: 11px;
-      color: var(--muted); white-space: nowrap;
-      overflow: hidden; text-overflow: ellipsis;
-      transition: color 0.2s;
-    }
+    .chip-name { flex: 1; font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 0.2s; }
     .report-chip.active .chip-name { color: var(--cream); }
-    .chip-sheets { font-size: 10px; color: #5a5750; flex-shrink: 0; }
-    .chip-remove {
-      font-size: 14px; color: #5a5750; cursor: pointer;
-      line-height: 1; padding: 0 2px;
-      flex-shrink: 0;
-    }
+    .chip-meta { font-size: 10px; color: #5a5750; flex-shrink: 0; }
+    .chip-remove { font-size: 14px; color: #5a5750; cursor: pointer; line-height: 1; padding: 0 2px; flex-shrink: 0; }
     .chip-remove:hover { color: #c0553a; }
 
-    .sidebar-actions {
-      display: flex; gap: 6px;
-    }
+    .sidebar-actions { display: flex; gap: 6px; }
     .sidebar-btn {
-      flex: 1; font-size: 10px; padding: 6px 4px;
-      letter-spacing: 0.06em; text-transform: uppercase;
-      border: 0.5px solid rgba(200,169,110,0.2);
-      background: transparent; color: var(--muted);
-      border-radius: 4px; cursor: pointer;
-      transition: color 0.15s, border-color 0.15s;
+      flex: 1; font-size: 10px; padding: 6px 4px; letter-spacing: 0.06em; text-transform: uppercase;
+      border: 0.5px solid rgba(200,169,110,0.2); background: transparent; color: var(--muted);
+      border-radius: 4px; cursor: pointer; transition: color 0.15s, border-color 0.15s;
     }
     .sidebar-btn:hover { color: var(--gold); border-color: var(--gold); }
 
-    /* Chat area */
-    .chat-wrap {
-      flex: 1; display: flex; flex-direction: column;
-      overflow: hidden;
+    /* HISTORY */
+    .history-item {
+      padding: 10px; border-radius: 5px; border: 0.5px solid var(--border-light);
+      cursor: pointer; transition: border-color 0.15s;
     }
+    .history-item:hover { border-color: rgba(200,169,110,0.3); }
+    .history-q { font-size: 12px; color: var(--cream); line-height: 1.4; margin-bottom: 4px; }
+    .history-meta { font-size: 10px; color: var(--muted); }
+    .history-a { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.4; display: none; border-top: 0.5px solid var(--border-light); padding-top: 6px; }
+    .history-item.open .history-a { display: block; }
+    .history-empty { font-size: 12px; color: var(--muted); text-align: center; padding: 2rem 0; font-style: italic; font-family: 'Cormorant Garamond', serif; }
 
-    .chat-messages {
-      flex: 1; overflow-y: auto; padding: 1.5rem 1.75rem;
-      display: flex; flex-direction: column; gap: 1rem;
-      scroll-behavior: smooth;
-    }
-
-    .empty-state {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      height: 100%; gap: 1rem; opacity: 0.6;
-    }
+    /* CHAT */
+    .chat-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 1.5rem 1.75rem; display: flex; flex-direction: column; gap: 1rem; }
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 1rem; opacity: 0.6; }
     .empty-state .line { width: 28px; height: 1px; background: var(--gold); }
-    .empty-state p {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 15px; font-style: italic; color: var(--muted);
-    }
-
+    .empty-state p { font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic; color: var(--muted); }
     .msg { display: flex; }
     .msg.user { justify-content: flex-end; }
-    .msg.assistant { justify-content: flex-start; }
-
-    .bubble {
-      max-width: 75%; padding: 11px 15px;
-      font-size: 13.5px; line-height: 1.6;
-      border-radius: 2px;
-    }
-    .msg.user .bubble {
-      background: rgba(200,169,110,0.15);
-      border: 0.5px solid rgba(200,169,110,0.3);
-      color: var(--cream);
-      border-radius: 8px 8px 2px 8px;
-    }
-    .msg.assistant .bubble {
-      background: rgba(244,239,230,0.04);
-      border: 0.5px solid var(--border-light);
-      color: var(--cream);
-      border-radius: 8px 8px 8px 2px;
-    }
+    .bubble { max-width: 75%; padding: 11px 15px; font-size: 13.5px; line-height: 1.6; }
+    .msg.user .bubble { background: rgba(200,169,110,0.15); border: 0.5px solid rgba(200,169,110,0.3); color: var(--cream); border-radius: 8px 8px 2px 8px; }
+    .msg.assistant .bubble { background: rgba(244,239,230,0.04); border: 0.5px solid var(--border-light); color: var(--cream); border-radius: 8px 8px 8px 2px; }
     .bubble.loading { color: var(--muted); font-style: italic; }
     .bubble strong { color: var(--cream); font-weight: 500; }
     .bubble ul { padding-left: 16px; margin: 4px 0; }
     .bubble li { margin-bottom: 3px; }
-
-    /* Quick prompts */
-    .quick-bar {
-      padding: 0.6rem 1.75rem;
-      border-top: 0.5px solid var(--border);
-      display: flex; gap: 6px; flex-wrap: wrap;
-    }
-    .quick-btn {
-      font-size: 11px; padding: 5px 12px;
-      border: 0.5px solid rgba(200,169,110,0.2);
-      border-radius: 20px; background: transparent;
-      color: var(--muted); cursor: pointer;
-      transition: all 0.15s; white-space: nowrap;
-    }
+    .quick-bar { padding: 0.6rem 1.75rem; border-top: 0.5px solid var(--border); display: flex; gap: 6px; flex-wrap: wrap; }
+    .quick-btn { font-size: 11px; padding: 5px 12px; border: 0.5px solid rgba(200,169,110,0.2); border-radius: 20px; background: transparent; color: var(--muted); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
     .quick-btn:hover { color: var(--gold); border-color: var(--gold); }
-
-    /* Input */
-    .input-bar {
-      padding: 1rem 1.75rem;
-      border-top: 0.5px solid var(--border);
-      display: flex; gap: 10px; align-items: center;
-      background: rgba(244,239,230,0.02);
-    }
-    .input-bar input {
-      flex: 1;
-      background: rgba(244,239,230,0.05);
-      border: 0.5px solid var(--border);
-      color: var(--cream);
-      padding: 11px 15px;
-      font-size: 14px;
-      border-radius: 4px;
-      outline: none;
-      font-family: inherit;
-    }
+    .input-bar { padding: 1rem 1.75rem; border-top: 0.5px solid var(--border); display: flex; gap: 10px; align-items: center; }
+    .input-bar input { flex: 1; background: rgba(244,239,230,0.05); border: 0.5px solid var(--border); color: var(--cream); padding: 11px 15px; font-size: 14px; border-radius: 4px; outline: none; font-family: inherit; }
     .input-bar input:focus { border-color: rgba(200,169,110,0.5); }
     .input-bar input::placeholder { color: var(--muted); }
     .input-bar input:disabled { opacity: 0.4; }
-    .send-btn {
-      background: transparent;
-      border: 0.5px solid var(--gold);
-      color: var(--gold);
-      padding: 10px 20px;
-      font-size: 11px; letter-spacing: 0.1em;
-      text-transform: uppercase;
-      cursor: pointer; border-radius: 4px;
-      transition: background 0.2s;
-      white-space: nowrap;
-    }
+    .send-btn { background: transparent; border: 0.5px solid var(--gold); color: var(--gold); padding: 10px 20px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; border-radius: 4px; transition: background 0.2s; white-space: nowrap; }
     .send-btn:hover:not(:disabled) { background: var(--gold-light); }
     .send-btn:disabled { opacity: 0.3; cursor: default; }
-
-    /* Scrollbar */
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(200,169,110,0.2); border-radius: 2px; }
+    .sync-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: rgba(200,169,110,0.1); color: var(--gold); border: 0.5px solid var(--border); }
   </style>
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="loginScreen">
   <div class="login-logo">
     <p>Kenoa Resort · Barra de São Miguel</p>
@@ -325,14 +155,12 @@
   </div>
   <div class="login-divider"></div>
   <div class="login-form">
-    <input type="password" id="passwordInput" placeholder="Senha de acesso"
-      onkeydown="if(event.key==='Enter') doLogin()" />
+    <input type="password" id="passwordInput" placeholder="Senha de acesso" onkeydown="if(event.key==='Enter') doLogin()" />
     <button class="login-btn" onclick="doLogin()">Entrar</button>
     <p id="loginError"></p>
   </div>
 </div>
 
-<!-- APP -->
 <div id="app">
   <header class="header">
     <div class="header-brand">
@@ -340,39 +168,42 @@
       <h1>Assistente Operacional</h1>
     </div>
     <div class="header-status">
-      <span id="statusText">nenhum relatório</span>
+      <span id="statusText">a sincronizar...</span>
       <div id="statusDot"></div>
     </div>
   </header>
 
   <div class="main">
-    <!-- Sidebar -->
     <aside class="sidebar">
-      <div>
-        <p class="sidebar-label">Relatórios</p>
+      <div class="sidebar-tabs">
+        <button class="sidebar-tab active" onclick="switchTab('reports')">Relatórios</button>
+        <button class="sidebar-tab" onclick="switchTab('history')">Histórico</button>
+      </div>
+
+      <div class="sidebar-panel active" id="panel-reports">
         <div class="drop-zone" id="dropZone"
           onclick="document.getElementById('fileInput').click()"
-          ondragover="onDragOver(event)"
-          ondragleave="onDragLeave(event)"
-          ondrop="onDrop(event)">
-          <input type="file" id="fileInput" multiple accept=".xlsx,.xls"
-            style="display:none" onchange="handleFiles(this.files)" />
+          ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+          <input type="file" id="fileInput" multiple accept=".xlsx,.xls" style="display:none" onchange="handleFiles(this.files)" />
           <p>Arraste os Excel aqui<br/>ou <span>clique para seleccionar</span></p>
+        </div>
+        <div id="reportListWrap" style="display:none">
+          <p class="sidebar-label">Carregados</p>
+          <div id="reportList"></div>
+          <div class="sidebar-actions" style="margin-top:8px">
+            <button class="sidebar-btn" onclick="selectAll(true)">Todos</button>
+            <button class="sidebar-btn" onclick="selectAll(false)">Nenhum</button>
+            <button class="sidebar-btn" onclick="clearAll()" style="color:#c0553a55;border-color:#c0553a22">Limpar</button>
+          </div>
         </div>
       </div>
 
-      <div id="reportListWrap" style="display:none">
-        <p class="sidebar-label">Carregados</p>
-        <div id="reportList"></div>
-        <div class="sidebar-actions" style="margin-top:8px;">
-          <button class="sidebar-btn" onclick="selectAll(true)">Todos</button>
-          <button class="sidebar-btn" onclick="selectAll(false)">Nenhum</button>
-          <button class="sidebar-btn" onclick="clearAll()" style="color:#c0553a55;border-color:#c0553a33;">Limpar</button>
-        </div>
+      <div class="sidebar-panel" id="panel-history">
+        <p class="sidebar-label">Perguntas anteriores</p>
+        <div id="historyList"><p class="history-empty">Nenhum histórico ainda</p></div>
       </div>
     </aside>
 
-    <!-- Chat -->
     <div class="chat-wrap">
       <div class="chat-messages" id="chatMessages">
         <div class="empty-state" id="emptyState">
@@ -381,7 +212,6 @@
           <div class="line"></div>
         </div>
       </div>
-
       <div class="quick-bar" id="quickBar" style="display:none">
         <button class="quick-btn" onclick="ask('Quais ocorrências estão registadas nestes relatórios?')">Ocorrências</button>
         <button class="quick-btn" onclick="ask('Quais hóspedes chegam ou saem? Alguma observação importante?')">Chegadas & Saídas</button>
@@ -389,10 +219,8 @@
         <button class="quick-btn" onclick="ask('Há algum pedido especial ou nota no briefing?')">Briefing</button>
         <button class="quick-btn" onclick="ask('Faz um resumo executivo de todos os relatórios carregados.')">Resumo geral</button>
       </div>
-
       <div class="input-bar">
-        <input type="text" id="qInput" placeholder="Pergunta sobre os relatórios..." disabled
-          onkeydown="if(event.key==='Enter') sendQ()" />
+        <input type="text" id="qInput" placeholder="Pergunta sobre os relatórios..." disabled onkeydown="if(event.key==='Enter') sendQ()" />
         <button class="send-btn" id="sendBtn" onclick="sendQ()" disabled>Enviar</button>
       </div>
     </div>
@@ -400,43 +228,98 @@
 </div>
 
 <script>
-// ── AUTH ──────────────────────────────────────────────
 const PASSWORD = 'kenoa2025';
+const SUPABASE_URL = 'https://eqqyuvhpmiyqdxdjhrhc.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcXl1dmhwbWl5cWR4ZGpocmhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0ODYxOTEsImV4cCI6MjA5MTA2MjE5MX0.NJoYMkGfUGiAHE_LBnFC_Sshgh2Q0A_ci4c1sqYqTd8';
+let sb;
+let reports = {};
+let conversation = [];
+let msgId = 0;
 
 function doLogin() {
   const val = document.getElementById('passwordInput').value;
   if (val === PASSWORD) {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
+    initSupabase();
   } else {
     document.getElementById('loginError').textContent = 'Senha incorrecta.';
     setTimeout(() => document.getElementById('loginError').textContent = '', 2000);
   }
 }
 
-// ── FILES ─────────────────────────────────────────────
-let reports = {};
-let conversation = [];
-let msgId = 0;
+async function initSupabase() {
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  await loadReports();
+  await loadHistory();
+}
 
-function onDragOver(e) {
-  e.preventDefault();
-  document.getElementById('dropZone').classList.add('drag-over');
+async function loadReports() {
+  try {
+    const { data, error } = await sb.from('reports').select('*').order('uploaded_at', { ascending: false });
+    if (error) throw error;
+    if (data && data.length > 0) {
+      data.forEach(r => {
+        reports[r.name] = { name: r.name, sheets: r.data, active: true, id: r.id };
+      });
+      renderSidebar();
+      updateStatus();
+    } else {
+      setStatus('pronto', true);
+    }
+  } catch(e) {
+    setStatus('erro de ligação', false);
+  }
 }
-function onDragLeave() {
-  document.getElementById('dropZone').classList.remove('drag-over');
+
+async function loadHistory() {
+  try {
+    const { data } = await sb.from('conversations').select('*').order('asked_at', { ascending: false }).limit(40);
+    renderHistory(data || []);
+  } catch(e) {}
 }
-function onDrop(e) {
-  e.preventDefault();
-  onDragLeave();
-  handleFiles(e.dataTransfer.files);
+
+function renderHistory(items) {
+  const list = document.getElementById('historyList');
+  if (!items.length) {
+    list.innerHTML = '<p class="history-empty">Nenhum histórico ainda</p>';
+    return;
+  }
+  list.innerHTML = '';
+  items.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'history-item';
+    const date = new Date(item.asked_at).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+    div.innerHTML = `
+      <p class="history-q">${item.question}</p>
+      <p class="history-meta">${date}${item.report_names?.length ? ' · ' + item.report_names.join(', ') : ''}</p>
+      <p class="history-a">${item.answer.substring(0, 300)}${item.answer.length > 300 ? '...' : ''}</p>`;
+    div.onclick = () => { div.classList.toggle('open'); };
+    list.appendChild(div);
+  });
 }
+
+function switchTab(tab) {
+  document.querySelectorAll('.sidebar-tab').forEach((t, i) => t.classList.toggle('active', ['reports','history'][i] === tab));
+  document.querySelectorAll('.sidebar-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  if (tab === 'history') loadHistory();
+}
+
+function setStatus(text, ok) {
+  document.getElementById('statusText').textContent = text;
+  document.getElementById('statusDot').style.background = ok ? '#7cb87a' : '#c0553a';
+}
+
+function onDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('drag-over'); }
+function onDragLeave() { document.getElementById('dropZone').classList.remove('drag-over'); }
+function onDrop(e) { e.preventDefault(); onDragLeave(); handleFiles(e.dataTransfer.files); }
 
 function handleFiles(files) {
   Array.from(files).forEach(file => {
     if (!file.name.match(/\.xlsx?$/i)) return;
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
         const sheets = {};
@@ -449,6 +332,9 @@ function handleFiles(files) {
         reports[file.name] = { name: file.name, sheets, active: true };
         renderSidebar();
         updateStatus();
+        // Save to Supabase
+        await sb.from('reports').upsert({ name: file.name, data: sheets }, { onConflict: 'name' });
+        addMsg('assistant', `**${file.name}** carregado e sincronizado — disponível para toda a equipa.`);
       } catch(err) {
         addMsg('assistant', `Não foi possível ler ${file.name}.`);
       }
@@ -470,24 +356,22 @@ function renderSidebar() {
     chip.innerHTML = `
       <div class="chip-dot"></div>
       <span class="chip-name" title="${r.name}">${r.name.replace(/\.xlsx?$/i,'')}</span>
-      <span class="chip-sheets">${Object.keys(r.sheets).length} abas</span>
+      <span class="chip-meta">${Object.keys(r.sheets).length}ab</span>
       <span class="chip-remove" onclick="removeReport('${key}',event)">×</span>`;
     chip.onclick = () => { r.active = !r.active; renderSidebar(); };
     list.appendChild(chip);
   });
 }
 
-function removeReport(key, e) {
+async function removeReport(key, e) {
   e.stopPropagation();
+  await sb.from('reports').delete().eq('name', key);
   delete reports[key];
   renderSidebar();
   updateStatus();
 }
 
-function selectAll(val) {
-  Object.values(reports).forEach(r => r.active = val);
-  renderSidebar();
-}
+function selectAll(val) { Object.values(reports).forEach(r => r.active = val); renderSidebar(); }
 
 function clearAll() {
   reports = {}; conversation = [];
@@ -499,26 +383,20 @@ function clearAll() {
 function addEmptyState() {
   const chat = document.getElementById('chatMessages');
   if (!document.getElementById('emptyState')) {
-    chat.innerHTML = `<div class="empty-state" id="emptyState">
-      <div class="line"></div><p>Carregue um relatório para começar</p><div class="line"></div>
-    </div>`;
+    chat.innerHTML = `<div class="empty-state" id="emptyState"><div class="line"></div><p>Carregue um relatório para começar</p><div class="line"></div></div>`;
   }
 }
 
 function updateStatus() {
   const count = Object.keys(reports).length;
-  const dot = document.getElementById('statusDot');
-  const txt = document.getElementById('statusText');
   const hasFiles = count > 0;
-  dot.style.background = hasFiles ? '#7cb87a' : '#3a3a38';
-  txt.textContent = hasFiles ? `${count} relatório${count>1?'s':''} carregado${count>1?'s':''}` : 'nenhum relatório';
+  setStatus(hasFiles ? `${count} relatório${count>1?'s':''} sincronizado${count>1?'s':''}` : 'pronto', true);
   document.getElementById('qInput').disabled = !hasFiles;
   document.getElementById('sendBtn').disabled = !hasFiles;
   document.getElementById('quickBar').style.display = hasFiles ? 'flex' : 'none';
   if (hasFiles) document.getElementById('emptyState')?.remove();
 }
 
-// ── CHAT ──────────────────────────────────────────────
 function buildContext() {
   const active = Object.values(reports).filter(r => r.active);
   const src = active.length > 0 ? active : Object.values(reports);
@@ -533,28 +411,22 @@ function buildContext() {
   return ctx;
 }
 
-function ask(text) {
-  document.getElementById('qInput').value = text;
-  sendQ();
-}
+function ask(text) { document.getElementById('qInput').value = text; sendQ(); }
 
 async function sendQ() {
   const input = document.getElementById('qInput');
   const q = input.value.trim();
   if (!q || Object.keys(reports).length === 0) return;
-
   addMsg('user', q);
   input.value = '';
   const lid = addMsg('assistant', null, true);
   conversation.push({ role: 'user', content: q });
-
   const context = buildContext();
-  const system = `És o assistente operacional do Kenoa Resort, em Barra de São Miguel, Alagoas — um resort boutique de luxo. Analisa relatórios de turno e responde perguntas operacionais em português do Brasil, de forma clara e concisa. Identifica automaticamente datas, turnos e abas relevantes nos dados. Nunca inventes informação — se não estiver nos dados, diz claramente. Os dados disponíveis são:\n${context}`;
-
+  const activeNames = Object.values(reports).filter(r => r.active).map(r => r.name);
+  const system = `És o assistente operacional do Kenoa Resort, em Barra de São Miguel, Alagoas — um resort boutique de luxo. Analisa relatórios de turno e responde perguntas operacionais em português do Brasil, de forma clara e concisa. Identifica automaticamente datas, turnos e abas relevantes. Nunca inventes informação — se não estiver nos dados, diz claramente.\n\nDADOS:\n${context}`;
   try {
     const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ system, messages: conversation.slice(-16) })
     });
     const data = await res.json();
@@ -562,6 +434,8 @@ async function sendQ() {
     const reply = data.content[0].text;
     conversation.push({ role: 'assistant', content: reply });
     updateMsg(lid, reply);
+    // Save to history
+    await sb.from('conversations').insert({ question: q, answer: reply, report_names: activeNames });
   } catch(e) {
     updateMsg(lid, 'Erro ao processar. Tenta novamente.');
   }
@@ -588,14 +462,10 @@ function addMsg(role, text, loading = false) {
 
 function updateMsg(id, text) {
   const el = document.getElementById(id);
-  if (el) {
-    el.querySelector('.bubble').className = 'bubble';
-    el.querySelector('.bubble').innerHTML = md(text);
-  }
+  if (el) { el.querySelector('.bubble').className = 'bubble'; el.querySelector('.bubble').innerHTML = md(text); }
   document.getElementById('chatMessages').scrollTop = 99999;
 }
 
-// Prevent browser from opening files dragged outside the drop zone
 document.addEventListener('dragover', e => e.preventDefault());
 document.addEventListener('drop', e => e.preventDefault());
 </script>
