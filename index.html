@@ -594,6 +594,10 @@ function updateMsg(id, text) {
   }
   document.getElementById('chatMessages').scrollTop = 99999;
 }
+
+// Prevent browser from opening files dragged outside the drop zone
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => e.preventDefault());
 </script>
 </body>
 </html>
