@@ -17,13 +17,23 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
-  const { messages, system } = JSON.parse(event.body);
+  let body;
+  try { body = JSON.parse(event.body); }
+  catch (e) { return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
+
+  const { messages, system } = body;
+
+  const trimmedSystem = system && system.length > 40000
+    ? system.substring(0, 40000) + '\n\n[dados truncados por tamanho]'
+    : system;
+
+  const trimmedMessages = (messages || []).slice(-8);
 
   const payload = JSON.stringify({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 1500,
-    system,
-    messages
+    system: trimmedSystem,
+    messages: trimmedMessages
   });
 
   return new Promise((resolve) => {
@@ -43,10 +53,7 @@ exports.handler = async (event) => {
       res.on('end', () => {
         resolve({
           statusCode: 200,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
           body: data
         });
       });
@@ -57,6 +64,15 @@ exports.handler = async (event) => {
         statusCode: 500,
         headers: { 'Access-Control-Allow-Origin': '*' },
         body: JSON.stringify({ error: e.message })
+      });
+    });
+
+    req.setTimeout(25000, () => {
+      req.destroy();
+      resolve({
+        statusCode: 504,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ error: 'Timeout' })
       });
     });
 
